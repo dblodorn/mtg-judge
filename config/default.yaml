@@ -1,0 +1,31 @@
+# MTG Judge Voice Assistant Configuration
+
+# Moonshine STT
+language: en
+moonshine_model_arch: null  # null = auto (tiny on Pi, medium on desktop)
+
+# Ollama
+llm_model: llama3.1:8b
+embed_model: nomic-embed-text
+ollama_host: http://localhost:11434
+
+# RAG
+index_path: index/
+collection: mtg_judge
+k: 8                      # top-k chunks after MMR
+rrf_k: 60                 # RRF constant
+mmr_lambda: 0.5           # 0=max diversity, 1=max relevance
+
+# Retrieval strategy flags (Pi = all false; dev box = can enable)
+enable_reranking: false   # cross-encoder reranking (sentence-transformers)
+enable_hyde: false        # hypothetical document embeddings
+enable_compression: false # contextual compression
+enable_multi_query: false # multi-query retrieval
+
+# TTS
+tts_language: en_us
+tts_voice: amy
+
+# Audio (null = system default)
+input_device: null
+output_device: null

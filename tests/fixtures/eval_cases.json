@@ -1,0 +1,110 @@
+[
+  {
+    "question": "Does protection from red stop lightning bolt?",
+    "expected_sources": ["cr"],
+    "expected_sections_any": ["702.16"],
+    "expected_keywords": ["protection", "prevent"]
+  },
+  {
+    "question": "What does rule 702.16a say?",
+    "expected_sources": ["cr"],
+    "expected_sections_any": ["702.16"],
+    "expected_keywords": ["protection"]
+  },
+  {
+    "question": "Can I cast a sorcery at instant speed?",
+    "expected_sources": ["cr"],
+    "expected_sections_any": ["307.1"],
+    "expected_keywords": ["sorcery"]
+  },
+  {
+    "question": "What happens if I draw extra cards?",
+    "expected_sources": ["ipg", "jar"],
+    "expected_keywords": ["extra", "draw"]
+  },
+  {
+    "question": "How does Lightning Bolt work?",
+    "expected_sources": ["scryfall"],
+    "expected_cards": ["Lightning Bolt"],
+    "expected_keywords": ["damage", "target"]
+  },
+  {
+    "question": "What's the penalty for slow play?",
+    "expected_sources": ["ipg", "mtr"],
+    "expected_keywords": ["slow play"]
+  },
+  {
+    "question": "Can a creature block if it's tapped?",
+    "expected_sources": ["cr"],
+    "expected_sections_any": ["506.4"],
+    "expected_keywords": ["tapped", "block"]
+  },
+  {
+    "question": "What is the stack?",
+    "expected_sources": ["cr"],
+    "expected_sections_any": ["605", "405"],
+    "expected_keywords": ["stack"]
+  },
+  {
+    "question": "How does deathtouch work with trample?",
+    "expected_sources": ["cr"],
+    "expected_keywords": ["deathtouch", "trample"]
+  },
+  {
+    "question": "Does Counterspell target spells on the stack?",
+    "expected_sources": ["scryfall"],
+    "expected_cards": ["Counterspell"],
+    "expected_keywords": ["target", "spell"]
+  },
+  {
+    "question": "What is priority?",
+    "expected_sources": ["cr"],
+    "expected_keywords": ["priority"]
+  },
+  {
+    "question": "How does lifelink work?",
+    "expected_sources": ["cr"],
+    "expected_sections_any": ["702.15"],
+    "expected_keywords": ["lifelink", "life"]
+  },
+  {
+    "question": "What's the penalty for drawing extra cards at competitive?",
+    "expected_sources": ["ipg"],
+    "expected_keywords": ["extra", "warning", "game loss"]
+  },
+  {
+    "question": "What does exile mean?",
+    "expected_sources": ["cr"],
+    "expected_keywords": ["exile"]
+  },
+  {
+    "question": "Can I respond to my own spell?",
+    "expected_sources": ["cr"],
+    "expected_keywords": ["priority", "stack", "respond"]
+  },
+  {
+    "question": "What is a state-based action?",
+    "expected_sources": ["cr"],
+    "expected_keywords": ["state-based"]
+  },
+  {
+    "question": "How do double-faced cards work?",
+    "expected_sources": ["cr"],
+    "expected_keywords": ["double-faced", "transform"]
+  },
+  {
+    "question": "What is the legend rule?",
+    "expected_sources": ["cr"],
+    "expected_keywords": ["legend", "legendary"]
+  },
+  {
+    "question": "What is the mana burn rule?",
+    "expected_sources": ["cr"],
+    "expected_keywords": ["mana"]
+  },
+  {
+    "question": "How does ward work?",
+    "expected_sources": ["cr"],
+    "expected_keywords": ["ward"]
+  }
+]
