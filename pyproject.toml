@@ -1,0 +1,26 @@
+[project]
+name = "mtg-judge"
+version = "0.1.0"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "moonshine-voice>=0.0.68",
+  "ollama>=0.3.0",
+  "chromadb>=0.5.0",
+  "bm25s>=0.1.7",
+  "pydantic>=2.0",
+  "numpy>=1.26",
+  "requests>=2.31",
+  "pyyaml>=6.0",
+  "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-cov", "ruff", "sentence-transformers>=2.0"]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
