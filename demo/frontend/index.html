@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MTG Judge — Voice Rules Assistant</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>⚖️ MTG Judge</h1>
+      <p class="subtitle">Ask a rules question. Get a ruling.</p>
+    </header>
+
+    <div class="config-bar">
+      <input type="text" id="api-url" placeholder="Backend URL (empty for same origin)" value="">
+      <span id="connection-status" class="status-dot disconnected">●</span>
+    </div>
+
+    <div class="mic-section">
+      <button id="mic-btn" class="mic-btn">🎤 Hold to Talk</button>
+      <div id="status" class="status">Click and speak, or type below</div>
+    </div>
+
+    <div class="text-input-section">
+      <input type="text" id="text-question" placeholder="Or type a question..." autocomplete="off">
+      <button id="text-submit" class="text-submit">Ask</button>
+    </div>
+
+    <div id="transcript" class="transcript"></div>
+
+    <div id="answer-section" class="answer-section hidden">
+      <div class="answer-header">
+        <span id="confidence-badge" class="confidence-badge"></span>
+        <span id="query-type" class="query-type"></span>
+      </div>
+      <div id="answer-text" class="answer-text"></div>
+      <div id="citations" class="citations"></div>
+      <details id="chunks-toggle" class="chunks-toggle">
+        <summary>Show retrieved rules</summary>
+        <div id="chunks" class="chunks"></div>
+      </details>
+    </div>
+
+    <div id="error" class="error hidden"></div>
+
+    <footer>
+      <p>Fully offline · <a href="https://github.com/dblodorn/mtg-judge" target="_blank">GitHub</a></p>
+    </footer>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

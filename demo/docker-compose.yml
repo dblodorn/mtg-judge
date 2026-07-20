@@ -1,0 +1,35 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+
+  api:
+    build:
+      context: .
+      dockerfile: demo/Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - ./demo/index:/app/demo/index  # pre-built index
+
+  # One-shot service to build the index before the API starts
+  index-builder:
+    build:
+      context: .
+      dockerfile: demo/Dockerfile
+      target: index-builder
+    command: python scripts/build_demo_index.py
+    volumes:
+      - ./demo/index:/app/demo/index
+    depends_on:
+      - ollama
+
+volumes:
+  ollama-models:
