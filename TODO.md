@@ -30,6 +30,17 @@ If the judge is stopped (Ctrl+C, or killed) while the LLM is generating, Ollama 
   - Cancel the in-flight request on shutdown. Close the `ollama.Client` HTTP connection, or stream the response and stop reading.
   - Have startup check `GET /api/ps` and report that a previous generation is still running.
 
+## Cloudflare R2 for data snapshots
+
+Today snapshots publish to a Dropbox-synced folder (`~/Dropbox/mtg-judge-artifacts`), which a Pi without the Dropbox app can't easily download from. R2 would give every machine a private, scriptable download, with no egress fees for the ~530 MB index.
+
+- Create a private R2 bucket (e.g. `mtg-judge-artifacts`) and two API tokens scoped to that bucket only: read/write for publishing from the Mac, and read-only for the Pi and other users.
+- `scripts/publish_data.py`: add an S3-compatible backend (`boto3`, endpoint `https://<account_id>.r2.cloudflarestorage.com`) next to `LocalBackend`. Selected by an `MTG_JUDGE_ARTIFACTS=r2://<bucket>` style URL. Same layout: `latest.json` + `<version>/{manifest.json,index.tar.gz,corpus.tar.gz}`.
+- `scripts/fetch_data.py`: read from R2 with the read-only token, or via presigned URLs so the Pi needs no credentials. Streaming download, sha256 verification and the swap-after-verify stay as they are.
+- Credentials in environment variables or a git-ignored `.env`, never in the repo or config.
+- Copy the existing Dropbox versions to R2 so `latest` matches. Then switch the defaults in `getting_started.sh`, the weekly update timer (fetch the latest snapshot rather than rebuilding on the Pi), and the README.
+- Keep the bucket private: the snapshots contain Wizards' rules text verbatim.
+
 ## Nice to haves
 
 ### Voice fonts

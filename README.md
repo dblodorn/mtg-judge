@@ -1,6 +1,18 @@
 # MTG Judge Voice Assistant
 
-A fully-offline voice assistant that answers Magic: The Gathering rules questions like a judge. Runs on a Raspberry Pi 5.
+An offline voice assistant that answers Magic: The Gathering rules questions like a judge. Ask it out loud ("Judge, what happens to Urza's Saga under Blood Moon?") and it looks up the current Comprehensive Rules, tournament documents and official card rulings, then answers with citations. Everything runs locally: speech recognition and voice (Moonshine), retrieval, and the LLM (Ollama). It runs on a Mac and is built to run on a Raspberry Pi 5.
+
+## Status (October 2026)
+
+| | |
+|---|---|
+| **Works on the Mac** | Full voice loop tested live: format prompt, wake word, multi-sentence questions, thinking cues, spoken answers, "Judge, stop" |
+| **Raspberry Pi 5** | Profile, systemd units and setup script ready; **not yet run on real hardware** |
+| **Accuracy** | `qwen3:8b` with reasoning: **73%** on a 38-case hard-ruling benchmark (Urza's Saga, layers, replacement effects…); about 85–90% cite the right rule on basic questions ([docs/benchmarks.md](docs/benchmarks.md)) |
+| **Data** | CR 2026-09-25, 32k cards, 76k official rulings, MTR/IPG/JAR, 6 months of Modern MTGO decklists |
+| **Known issues / roadmap** | [TODO.md](TODO.md): a late spoken acknowledgement in live sessions, a wrong Blood Moon + Urza's Saga answer (retrieval), voice fonts, custom sounds |
+
+It isn't a replacement for a certified judge. Answers carry a confidence prefix ("I'm fairly sure…", "I'm not certain, but…"), so treat low-confidence rulings as a starting point.
 
 ## Getting started
 
@@ -23,64 +35,40 @@ make run               # voice judge
 
 Text-only, no audio: `make ask Q="Does protection from red stop Lightning Bolt?"`
 
-At startup the judge asks **"Which format are we playing?"**. Answer "Modern", "EDH", "Legacy" and so on. Say "Judge, switch to Pioneer" any time to change it, or set `format:` in the config (or `--format modern`) to skip the question. The format is used for legality questions: each named card's legality in that format goes into the context.
+## Talking to the judge
 
-Start each question with the wake word: **"Judge, does deathtouch work with trample?"**. Pausing mid-question is fine: the judge waits for 3 seconds of quiet (`question_pause`) before answering. Say **"Judge, stop"** (or "Judge, goodbye") to end the session.
+| Say | What happens |
+|---|---|
+| *(at startup)* "Modern" / "EDH" / "Legacy" … | Answers "Which format are we playing?". The format is used for legality questions. Skip the question with `format:` in the config or `--format modern`. |
+| "Judge, does deathtouch work with trample?" | A rules question. Pausing mid-sentence is fine: it waits for 3 seconds of quiet. |
+| "Judge" … *(chime)* … "what happens if…" | A bare wake word gets a chime, and the mic stays open for your question. |
+| "Judge, switch to Pioneer" | Changes the format. Add a question and it answers that too. |
+| "Judge, are you there?" | "I'm here." |
+| "Judge, stop" / "Judge, goodbye" | Ends the session (or press Ctrl+C). |
 
-Once a question is complete, the judge says what it's looking up, for example *"Just a minute, looking up rulings for Blood Moon and Urza's Saga."* If reasoning takes more than 12 seconds it says "Still thinking.", then plays a soft chime every 12 seconds until it answers (`thinking_cue: speech | beep | off`). A bare "Judge" gets a chime, and the mic stays open so you can keep talking.
+While it works, the judge tells you what it's looking up: *"Just a minute, looking up rulings for Blood Moon and Urza's Saga."* If reasoning runs past 12 seconds it says "Still thinking.", then chimes every 12 seconds. Expect about 10–20 seconds per answer on a Mac. Anything not addressed to "Judge" is ignored, and the mic is muted while the judge speaks, so table talk and its own voice don't trigger it.
 
-Speech recognition is biased toward MTG vocabulary ("lore counter", "trample", …) and the ~130 most-played cards of the current format, taken from the metagame analysis. Without that bias, "Urza's Saga" can come out as "ursus of". If you only say "Judge", it answers "Yes?" and treats the next thing you say as the question. Anything not addressed to the judge is ignored, so ordinary table talk doesn't trigger it. The mic is muted while the judge speaks. Set `wake_word: null` in the config to answer everything.
+Speech recognition is biased toward MTG vocabulary ("lore counter", "trample", …) and the current format's ~130 most-played cards. Without the bias, "Urza's Saga" came out as "ursus of".
 
 ## Raspberry Pi 5 (8GB)
 
-Build the index on the desktop, because embedding ~38k chunks on the Pi takes hours. Then copy it over:
+Don't build the index on the Pi: embedding ~113k chunks there takes hours. Install a published snapshot, or copy one from the Mac:
 
 ```bash
-# On the Mac
-make index
-make sync-pi PI=pi@raspberrypi.local     # rsyncs code + index/ to ~/mtg-judge
-
 # On the Pi
-cd ~/mtg-judge
-make setup-venv
-make setup-ollama                        # qwen3:8b + the same embed model as the Mac index
+git clone https://github.com/dblodorn/mtg-judge.git && cd mtg-judge
+sudo apt install -y libportaudio2 python3-venv
+bash scripts/getting_started.sh --pi                     # fetches the index if MTG_JUDGE_ARTIFACTS points at a snapshot
+#   …or, from the Mac:  make sync-pi PI=pi@raspberrypi.local
 MTG_JUDGE_CONFIG=config/pi.yaml make run
 
-# Autostart on boot
-sudo cp deploy/mtg-judge.service /etc/systemd/system/
-sudo systemctl enable --now mtg-judge
+# Autostart on boot, plus a weekly data update
+sudo cp deploy/mtg-judge.service deploy/mtg-judge-update.{service,timer} /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now mtg-judge mtg-judge-update.timer
 ```
 
-`config/pi.yaml` keeps the same model and retrieval as the desktop. It only shrinks the LLM context window to 4k (memory) and uses lighter STT/TTS. Expect answers to take a while on the Pi: reasoning adds about 500 output tokens per question. Use `LLM_MODEL=gemma2:9b LLM_THINK=false` if you want speed over accuracy.
-
-## Architecture
-
-```
-Mic → Moonshine STT → Query Router → Hybrid RAG → Ollama LLM → Moonshine TTS → Speaker
-                                       ↑
-              MTG CR + MTR + JAR + IPG + Scryfall oracle (36k+ chunks)
-```
-
-### RAG Pipeline
-
-1. **Query Router** — detects rule numbers, card names, or tournament keywords → routes to appropriate sources
-2. **Hybrid Retrieval**:
-   - **BM25 sparse** — exact-match for rule numbers and card names
-   - **Dense** (nomic-embed-text via Ollama → ChromaDB) — semantic similarity
-   - **RRF fusion** — combines both rankings
-3. **Parent Document Expansion** — retrieves sub-rule (e.g. 702.16a), returns full section (702.16) for context
-4. **MMR Diversification** — avoids returning 5 near-identical sub-rules
-5. **LLM** — Ollama `qwen3:8b` with thinking, on both desktop and Pi (most accurate in [docs/benchmarks.md](docs/benchmarks.md); `gemma2:9b` is the fast alternative), with schema-constrained output: `{answer, confidence, citations}`. Citations not found in the retrieved context are dropped, and confidence is downgraded.
-6. **TTS** — Moonshine speaks the ruling with confidence prefix ("I'm fairly sure...")
-
-Exact rule numbers ("what does 702.16a say") and named cards are looked up directly and pinned ahead of search results.
-
-## Requirements
-
-- **Raspberry Pi 5** (8GB)
-- USB microphone
-- Speaker (3.5mm or USB)
-- microSD card (64GB+, A2-rated)
+`config/pi.yaml` keeps the desktop's model and retrieval, so the Mac reproduces what the Pi will say. It only shrinks the LLM context window to 4k (to fit in 8 GB), uses the small streaming STT model and a lighter voice. Expect answers to take minutes: the model reasons for about 500 tokens per question on the Pi's CPU. For speed over accuracy, use `LLM_MODEL=gemma2:9b LLM_THINK=false` (69% vs 73% on the hard set).
 
 ## Keeping data current
 
@@ -88,25 +76,18 @@ Exact rule numbers ("what does 702.16a say") and named cards are looked up direc
 make update      # new CR, new sets + rulings, MTR/IPG/JAR, and the metagame; prints what changed
 ```
 
-Only new or changed cards get embedded, so it's quick even on the Pi. Then restart the judge. On the Pi, `deploy/mtg-judge-update.timer` runs this weekly (Sunday 04:00) and restarts the service:
+Only new or changed chunks get embedded, so updates are quick. Restart the judge afterwards (on the Pi: `sudo systemctl restart mtg-judge`; the weekly timer does this for you). At startup the judge prints the data versions it loaded (`📖 Rules 20260925 · cards as of …`).
 
-```bash
-sudo cp deploy/mtg-judge-update.{service,timer} /etc/systemd/system/
-sudo systemctl daemon-reload && sudo systemctl enable --now mtg-judge-update.timer
-```
+### Data snapshots
 
-At startup the judge prints the data versions it loaded (`📖 Rules 20260925 · cards as of …`).
-
-### Data artifacts (index + corpus snapshots)
-
-Large data stays out of git. `make publish` packs the built index and a raw-corpus snapshot into an immutable, versioned artifact with a sha256 manifest. `make fetch-data` installs one (`latest` by default), checksum-verified. Use it to put the index on a Pi without building it there.
+Large data stays out of git. `make publish` packs the built index and a raw-corpus snapshot into an immutable, versioned artifact with a sha256 manifest. `make fetch-data` installs one (`latest` by default) and verifies the checksums.
 
 ```
 <root>/latest.json
-<root>/<date>_cr<CR date>_cards<Scryfall date>/{manifest.json, index.tar.gz, corpus.tar.gz}
+<root>/<date>_cr<CR date>_cards<Scryfall date>_<content hash>/{manifest.json, index.tar.gz, corpus.tar.gz}
 ```
 
-The root is `MTG_JUDGE_ARTIFACTS`. It defaults to `~/Dropbox/mtg-judge-artifacts`, which the Dropbox app syncs. `fetch_data.py --source` also takes an HTTPS base URL. The artifacts contain Wizards' rules text verbatim, so keep the storage private. Moving to Cloudflare R2 (S3-compatible) means adding a backend; the layout doesn't change.
+The root is `MTG_JUDGE_ARTIFACTS`, which defaults to `~/Dropbox/mtg-judge-artifacts` (synced by the Dropbox app). `fetch_data.py --source` also accepts an HTTPS base URL. Archives are deterministic, so publishing identical data does nothing. The artifacts contain Wizards' rules text verbatim, so keep the storage private. A Cloudflare R2 backend is planned ([TODO.md](TODO.md)).
 
 ### Metagame
 
@@ -114,88 +95,103 @@ The root is `MTG_JUDGE_ARTIFACTS`. It defaults to `~/Dropbox/mtg-judge-artifacts
 make metagame FORMAT=modern   # last 6 months of MTGO Challenges/Showcases/Qualifiers → archetypes + tiers
 ```
 
-Decklists come from official MTGO results on mtgo.com, fetched at one request per second. Archetypes are found by clustering decks by their nonland mainboards, and tiers are set by metagame share (Tier 1 ≥5%, Tier 2 ≥2%). The output goes to `corpus/metagame/<format>/`: `report.md`, `report.json`, and `cards.json`, the cards played in Tier 1–2 decks. mtgdecks.net isn't used because its robots.txt disallows AI crawlers.
+Decklists come from official MTGO results on mtgo.com, fetched politely (one request per second, cached per event). Archetypes are found by clustering decks by their nonland mainboards. Tiers are set by metagame share (Tier 1 ≥5%, Tier 2 ≥2%). Output goes to `corpus/metagame/<format>/`: `report.md`, `report.json` and `cards.json` (the cards played in Tier 1–2 decks, which also feed speech biasing). mtgdecks.net isn't used because its robots.txt disallows AI crawlers.
+
+## How it works
+
+```
+Mic → Moonshine STT (MTG-biased) → wake word / format / commands
+    → Query Router → Hybrid retrieval → Ollama qwen3:8b (reasoning) → Moonshine TTS → Speaker
+                          ↑
+   CR + glossary · MTR · IPG · JAR · Scryfall cards + official rulings   (~113k chunks)
+```
+
+1. **Router:** finds rule numbers (→ CR), tournament words (→ MTR/IPG/JAR), and card names. Card names are matched on whole words, longest first, and common-word names like "Opt" or "Island" need a capital letter.
+2. **Direct lookups:** exact rule numbers and named cards are pinned first. Each card comes with its 2 rulings closest to the question and its legality in the current format.
+3. **Hybrid search:** dense search (nomic-embed-text → ChromaDB) and BM25 run over the rules documents, once for the question as asked and once with card names replaced by what the cards do. All rankings are fused with RRF.
+4. **Parent expansion + MMR:** a matched sub-rule brings in its section, trimmed to the relevant lines. Near-duplicates are dropped.
+5. **LLM:** a structured answer `{answer, confidence, citations}`. Citations missing from the retrieved context are dropped, and confidence is lowered when that happens. If reasoning runs out of budget, the model answers again without reasoning.
+6. **TTS:** speaks the ruling with a confidence prefix.
+
+Architecture notes for contributors are in [CLAUDE.md](CLAUDE.md).
+
+## Requirements
+
+- **Development:** a Mac (Apple Silicon) or Linux desktop, Python 3.11/3.12, about 10 GB of disk (models + index), and roughly 8 GB of free RAM for `qwen3:8b`.
+- **Deployment:** a Raspberry Pi 5 (8 GB), a USB microphone, a speaker (3.5mm or USB), and a 64 GB+ A2 microSD card.
 
 ## Configuration
 
-`config/default.yaml` is the desktop profile. `config/pi.yaml` only overrides what differs on the Pi. Select a profile with `MTG_JUDGE_CONFIG=…` or `--config`. The env vars `LLM_MODEL`, `EMBED_MODEL` and `OLLAMA_HOST` override either profile.
+`config/default.yaml` is the desktop profile. `config/pi.yaml` only overrides what differs on the Pi. Select a profile with `MTG_JUDGE_CONFIG=…` or `--config`. The env vars `LLM_MODEL`, `LLM_THINK`, `EMBED_MODEL` and `OLLAMA_HOST` override either profile.
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `llm_model` | `qwen3:8b` | Ollama LLM model (benchmarks: `docs/benchmarks.md`) |
+| `llm_model` | `qwen3:8b` | Ollama LLM model (see [docs/benchmarks.md](docs/benchmarks.md)) |
 | `think` / `max_tokens` | `true` / `3072` | Reasoning on, capped so it can't run away |
+| `num_ctx` | `8192` (Pi: `4096`) | LLM context window |
 | `embed_model` | `nomic-embed-text` | Must match the model the index was built with |
 | `wake_word` | `judge` | `null` = answer every utterance |
 | `format` | `null` | Game format; `null` = ask by voice at startup |
+| `question_pause` | `3.0` | Seconds of quiet that end a question |
+| `thinking_cue` | `speech` | `speech`, `beep` or `off` |
 | `metagame_formats` | `[modern]` | Formats `make update` refreshes the metagame for |
-| `k` | `4` | Max chunks sent to the LLM |
-| `max_context_chars` | `3000` | Total context budget (more scored no better) |
-| `rrf_k` | `60` | RRF fusion constant |
-| `mmr_lambda` | `0.5` | 0=max diversity, 1=max relevance |
+| `k` / `max_context_chars` | `4` / `3000` | Retrieval budget (more context scored no better) |
 | `tts_voice` | `piper_en_US-amy-medium` | See `moonshine_voice.list_tts_voices("en_us")` |
 | `moonshine_model_arch` | `null` | STT model; `null` = library default (Pi: `small-streaming`) |
 | `input_device` / `output_device` | `null` | Audio device index or name |
 
-## Corpus Sources
+## Sources
 
 | Source | What | License |
 |--------|------|---------|
-| MTG Comprehensive Rules | Official game rules | Wizards of the Coast |
+| [Comprehensive Rules](https://magic.wizards.com/en/rules) | Official game rules + glossary (official .txt) | Wizards of the Coast |
 | Magic Tournament Rules (MTR) | Tournament procedures (official text via blogs.magicjudges.org) | Wizards of the Coast |
-| Judging at Regular (JAR) | Regular REL guidance | Magic Judges |
-| Infraction Procedure Guide (IPG) | Competitive REL penalties | Magic Judges |
-| Scryfall Oracle | Card text + metadata (paper cards) | Scryfall (CC BY) |
-
-Refresh weekly: `make corpus && make index`
+| Infraction Procedure Guide (IPG) | Competitive REL penalties | Wizards of the Coast |
+| Judging at Regular (JAR) | Regular REL guidance | Wizards of the Coast |
+| [Scryfall](https://scryfall.com/docs/api/bulk-data) | Oracle card text, legalities, and official rulings | Scryfall (card data © Wizards) |
+| [MTGO decklists](https://www.mtgo.com/decklists) | Metagame (Challenges, Showcases, Qualifiers) | Wizards of the Coast |
 
 ## Evaluation
 
 ```bash
+make eval-hard   # 39 tricky interactions, graded on the answer itself (by topic)
+make eval-llm    # 20 basic questions: retrieval + cited section + latency
 make eval        # pytest retrieval checks (needs Ollama + built index)
-make eval-llm    # score every case, retrieval + LLM, with per-question latency
-MTG_JUDGE_CONFIG=config/pi.yaml make eval-llm   # try the Pi model/budgets on the desktop
-make eval-hard   # 11 tricky interactions (Urza's Saga, layers…), graded on the answer itself
-bash scripts/benchmark_models.sh "qwen3:8b:think gemma2:9b"   # compare models
+bash scripts/benchmark_models.sh "qwen3:8b:think gemma2:9b"   # compare models (works on the Pi too)
 ```
 
-The eval runs 20 known MTG questions and checks that the expected sources, rule sections, cards and keywords are retrieved. It also checks that the LLM cites an expected section. The hard set grades the answers themselves against the current CR and official rulings. Model results are in [docs/benchmarks.md](docs/benchmarks.md).
+Every expected answer in `tests/fixtures/hard_cases.json` is checked against the current CR or an official ruling. Each case records its source, including cases where popular articles or AI answers get it wrong (for example, Blood Moon no longer kills Urza's Saga since the June 2025 Saga rules change). 14 local models were compared in [docs/benchmarks.md](docs/benchmarks.md).
 
 ## Troubleshooting
 
-**No microphone detected:**
-```bash
-arecord -l  # list recording devices
-```
+**"Waiting for the microphone…":** on macOS, allow your terminal under System Settings → Privacy & Security → Microphone. On Linux, check `arecord -l` and `input_device`.
 
-**Ollama too slow on Pi:** make sure you're running the Pi profile (`MTG_JUDGE_CONFIG=config/pi.yaml`). Then lower `max_context_chars`, or try a smaller model (`LLM_MODEL=qwen2.5:1.5b`).
+**Wrong mic or speaker:** list devices with `.venv/bin/python -c 'import sounddevice; print(sounddevice.query_devices())'` and set `input_device` / `output_device`.
 
-**Judge answers its own voice or table talk:** keep `wake_word` set. The mic is muted while TTS plays.
+**Slow startup after killing the judge mid-answer:** Ollama finishes the abandoned answer first; wait or restart Ollama. Stop with "Judge, stop" or Ctrl+C between answers ([TODO.md](TODO.md)).
 
-**ChromaDB index corrupted:**
-```bash
-rm -rf index/ && make index
-```
+**Too slow on the Pi:** check you're running the Pi profile, then try `LLM_MODEL=gemma2:9b LLM_THINK=false`.
 
-**Scryfall data stale:**
-```bash
-make corpus && make index
-```
+**Judge answers table talk or itself:** keep `wake_word` set. The mic is muted while it speaks.
 
-**Verify zero cloud calls:**
+**Index missing or corrupted:** `make fetch-data` (snapshot) or `rm -rf index/ && make index`.
+
+**Stale cards or rules:** `make update`.
+
+**Verify zero cloud calls while running:**
 ```bash
 sudo tcpdump -i any -n 'tcp and not port 22' &
-make run
-# All traffic should be localhost only
+make run          # all traffic should be localhost only
 ```
 
 ## Development
 
 ```bash
-make test        # unit tests only, no Ollama needed
+make test        # unit tests (no Ollama needed)
 make lint        # ruff
-make eval        # integration tests (requires Ollama + built index)
+make eval-hard   # integration benchmark (needs Ollama + index)
 ```
 
 ## License
 
-MIT (code) — See corpus sources for their respective licenses.
+MIT (code). See [Sources](#sources) for data licenses.
