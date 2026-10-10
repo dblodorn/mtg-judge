@@ -4,7 +4,6 @@ import argparse
 import json
 import sys
 import threading
-import time
 from pathlib import Path
 
 sys.path.insert(0, ".")
@@ -61,6 +60,7 @@ def main():
     if version.exists():
         v = json.loads(version.read_text())
         print(f"📖 Rules {v.get('cr', '?')} · cards as of {v.get('scryfall_cards', '?')[:10]} · built {v.get('built_at', '?')[:10]}")
+    print(f"⏳ Loading the index and warming up {config['llm_model']}…", flush=True)
     retriever, router, llm = build_pipeline(config)
 
     if args.ask:
@@ -97,6 +97,8 @@ def main():
         mic=mic,
         wake_word=config["wake_word"],
         game_format=args.format or config.get("format"),
+        question_pause=config.get("question_pause", 3.0),
+        thinking_cue=config.get("thinking_cue", "speech"),
     )
     mic.add_listener(listener)
     mic.load()
@@ -113,11 +115,11 @@ def main():
     mic.start()
     opened.set()
     wake = f'Say "{config["wake_word"].title()}, …" to' if config["wake_word"] else "Just"
-    print(f"🎤 MTG Judge listening — {wake} ask a rules question. Ctrl+C to quit.")
+    print(f"🎤 MTG Judge listening — {wake} ask a rules question. Say \"Judge, stop\" or press Ctrl+C to quit.")
     listener.start()  # asks "Which format are we playing?" unless one is configured
     try:
-        while True:
-            time.sleep(0.1)
+        while not listener.stopped.wait(0.1):  # until "Judge, stop" or Ctrl+C
+            pass
     except KeyboardInterrupt:
         pass
     finally:

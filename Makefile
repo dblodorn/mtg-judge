@@ -69,9 +69,10 @@ eval-hard:
 lint:
 	.venv/bin/ruff check src scripts tests
 
-# Copy code + a Mac-built index to the Pi (embedding on the Pi takes hours)
+# Copy code + a Mac-built index (+ metagame card lists for speech biasing) to the Pi
 sync-pi:
-	rsync -az --delete --exclude .venv --exclude corpus --exclude .git --exclude __pycache__ ./ $(PI):$(PI_DIR)/
+	rsync -az --delete --exclude .venv --exclude .git --exclude __pycache__ \
+	  --include 'corpus/' --include 'corpus/metagame/***' --exclude 'corpus/*' ./ $(PI):$(PI_DIR)/
 
 clean:
 	rm -rf __pycache__ .pytest_cache index/

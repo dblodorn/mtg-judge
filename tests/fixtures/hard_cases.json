@@ -798,5 +798,25 @@
     "truth": "No. Phasing out isn't leaving the battlefield, so 'until this leaves the battlefield' effects don't end.",
     "grounding": "Teferi's Protection ruling 2017-08-25",
     "source": "official ruling (Scryfall rulings bulk); research 2026-10-09"
+  },
+  {
+    "id": "saga-consign-lore-counter",
+    "topic": "urzas-saga",
+    "question": "Can I use Consign to Memory to stop Urza's Saga from getting its second lore counter?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Urza's Saga",
+      "Consign to Memory"
+    ],
+    "expected_sections_any": [
+      "714",
+      "703.4"
+    ],
+    "verdict": "no",
+    "truth": "No. Adding the lore counter is a turn-based action that doesn't use the stack (714.3c, 703.4f), so there's nothing to counter. Consign to Memory can counter the chapter II ability that triggers when the counter is added (714.2b). The Saga then doesn't gain the Construct ability, but the counter stays.",
+    "grounding": "CR 714.2b, 714.3c, 703.4f; Consign to Memory oracle text",
+    "source": "live voice test 2026-10-10: the judge wrongly said Consign to Memory prevents the lore counter"
   }
 ]

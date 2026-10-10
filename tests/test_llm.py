@@ -130,3 +130,27 @@ def test_answer_includes_format_when_given():
         llm.answer("is it legal?", [{"source": "cr", "section": "100.1", "text": "..."}], game_format="commander")
 
     assert "Format being played: Commander" in llm.client.chat.call_args.kwargs["messages"][1]["content"]
+
+
+def test_reasoning_out_of_budget_retries_without_thinking():
+    """Live bug: qwen3 spent all 3072 tokens thinking and the judge said "I'm not certain, but " (nothing)."""
+    empty = {"message": {"content": ""}, "eval_count": 3072, "prompt_eval_count": 900}
+    direct = {"message": {"content": '{"answer": "It stays.", "confidence": "high", "citations": []}'},
+              "eval_count": 40, "prompt_eval_count": 900}
+    with patch.object(JudgeLLM, "_preload"), patch("src.llm.ollama.Client") as client_cls:
+        client_cls.return_value.chat.side_effect = [empty, direct]
+        llm = JudgeLLM(think=True)
+        ruling = llm.answer("q", [{"source": "cr", "section": "714.4", "text": "..."}])
+
+    calls = client_cls.return_value.chat.call_args_list
+    assert [c.kwargs.get("think") for c in calls] == [True, False]
+    assert ruling.answer == "It stays."
+    assert ruling.confidence == "medium"  # fallback never claims high
+    assert llm.last_stats["output_tokens"] == 3112
+
+
+def test_empty_output_never_spoken_as_empty():
+    with patch.object(JudgeLLM, "_preload"):
+        llm = _llm({"message": {"content": ""}})
+        ruling = llm.answer("q", [{"source": "cr", "section": "100.1", "text": "..."}])
+    assert ruling.answer.strip()

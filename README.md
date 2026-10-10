@@ -25,7 +25,11 @@ Text-only, no audio: `make ask Q="Does protection from red stop Lightning Bolt?"
 
 At startup the judge asks **"Which format are we playing?"**. Answer "Modern", "EDH", "Legacy" and so on. Say "Judge, switch to Pioneer" any time to change it, or set `format:` in the config (or `--format modern`) to skip the question. The format is used for legality questions: each named card's legality in that format goes into the context.
 
-Start each question with the wake word: **"Judge, does deathtouch work with trample?"**. If you only say "Judge", it answers "Yes?" and treats the next thing you say as the question. Anything not addressed to the judge is ignored, so ordinary table talk doesn't trigger it. The mic is muted while the judge speaks. Set `wake_word: null` in the config to answer everything.
+Start each question with the wake word: **"Judge, does deathtouch work with trample?"**. Pausing mid-question is fine: the judge waits for 3 seconds of quiet (`question_pause`) before answering. Say **"Judge, stop"** (or "Judge, goodbye") to end the session.
+
+Once a question is complete, the judge says what it's looking up, for example *"Just a minute, looking up rulings for Blood Moon and Urza's Saga."* If reasoning takes more than 12 seconds it says "Still thinking.", then plays a soft chime every 12 seconds until it answers (`thinking_cue: speech | beep | off`). A bare "Judge" gets a chime, and the mic stays open so you can keep talking.
+
+Speech recognition is biased toward MTG vocabulary ("lore counter", "trample", …) and the ~130 most-played cards of the current format, taken from the metagame analysis. Without that bias, "Urza's Saga" can come out as "ursus of". If you only say "Judge", it answers "Yes?" and treats the next thing you say as the question. Anything not addressed to the judge is ignored, so ordinary table talk doesn't trigger it. The mic is muted while the judge speaks. Set `wake_word: null` in the config to answer everything.
 
 ## Raspberry Pi 5 (8GB)
 

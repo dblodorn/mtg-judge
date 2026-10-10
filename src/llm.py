@@ -99,6 +99,31 @@ class JudgeLLM:
                 + f"Question: {query}\n\nRespond as JSON:",
             },
         ]
+        response = self._chat(messages, think=self.think)
+        if response is None:
+            return JudgeRuling(answer="Sorry, I couldn't work out a ruling for that.", confidence="low", citations=[])
+        raw_text = response["message"]["content"]
+
+        if self.think and not raw_text.strip():
+            # Reasoning used the whole max_tokens budget and no answer was written.
+            # Ask once more without reasoning: a direct answer beats silence.
+            print("⚠ Reasoning ran out of budget — answering directly")
+            spent = self.last_stats["output_tokens"]
+            response = self._chat(messages, think=False)
+            if response is None:
+                return JudgeRuling(answer="Sorry, I couldn't work out a ruling for that.", confidence="low", citations=[])
+            raw_text = response["message"]["content"]
+            self.last_stats["output_tokens"] += spent
+            ruling = self._parse(raw_text)
+            # A no-reasoning fallback answer never claims high confidence
+            if ruling.confidence == "high":
+                ruling = ruling.model_copy(update={"confidence": "medium"})
+            return verify_citations(ruling, context_chunks)
+
+        return verify_citations(self._parse(raw_text), context_chunks)
+
+    def _chat(self, messages: list[dict], think: bool | None):
+        """One Ollama call; records token counts. None on a degenerate generation."""
         try:
             response = self.client.chat(
                 model=self.model,
@@ -106,20 +131,19 @@ class JudgeLLM:
                 format=JudgeRuling.model_json_schema(),
                 options=self.options,
                 keep_alive=-1,
-                **({"think": self.think} if self.think is not None else {}),
+                **({"think": think} if think is not None else {}),
             )
         except ollama.ResponseError as e:
             # e.g. "token repeat limit reached" — a degenerate generation, not a dead server
             print(f"⚠ LLM error: {e}")
             self.last_stats = {"prompt_tokens": 0, "output_tokens": 0}
-            return JudgeRuling(answer="Sorry, I couldn't work out a ruling for that.", confidence="low", citations=[])
+            return None
         # Token counts — what Pi latency actually depends on (prompt eval dominates on CPU)
         self.last_stats = {
             "prompt_tokens": response.get("prompt_eval_count") or 0,
             "output_tokens": response.get("eval_count") or 0,
         }
-        raw_text = response["message"]["content"]
-        return verify_citations(self._parse(raw_text), context_chunks)
+        return response
 
     @staticmethod
     def _parse(raw_text: str) -> JudgeRuling:
@@ -132,5 +156,6 @@ class JudgeLLM:
         except (json.JSONDecodeError, ValidationError, TypeError):
             pass
 
-        # Fallback: treat as plain text
-        return JudgeRuling(answer=raw_text, confidence="low", citations=[])
+        # Fallback: treat as plain text (never an empty answer)
+        return JudgeRuling(answer=raw_text.strip() or "Sorry, I couldn't work out a ruling for that.",
+                           confidence="low", citations=[])

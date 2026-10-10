@@ -7,6 +7,8 @@ language: en
 moonshine_model_arch: null  # null = library default (medium-streaming); tiny | base | *-streaming
 wake_word: judge            # only answer lines starting "Judge, …"; null = answer everything
 format: null                # modern, legacy, commander…; null = ask by voice at startup
+question_pause: 3.0         # seconds of quiet that end a question (live test: 2 s split real questions)
+thinking_cue: speech        # after a question: speech ("Let me check."), beep, or off; repeats while reasoning
 metagame_formats: [modern]  # `make update` refreshes these formats' MTGO metagame (last 6 months)
 
 # Ollama
