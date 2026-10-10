@@ -3,6 +3,7 @@
 import argparse
 import json
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -100,7 +101,17 @@ def main():
     mic.add_listener(listener)
     mic.load()
 
+    # macOS blocks opening the mic until the terminal app is granted access, with no
+    # error — so say what's happening instead of hanging silently.
+    opened = threading.Event()
+    def mic_watchdog():
+        if not opened.wait(5):
+            print("⏳ Waiting for the microphone… On macOS, allow your terminal app in the prompt or in\n"
+                  "   System Settings → Privacy & Security → Microphone, then restart. On Linux, check\n"
+                  "   `arecord -l` and input_device in the config.", flush=True)
+    threading.Thread(target=mic_watchdog, daemon=True).start()
     mic.start()
+    opened.set()
     wake = f'Say "{config["wake_word"].title()}, …" to' if config["wake_word"] else "Just"
     print(f"🎤 MTG Judge listening — {wake} ask a rules question. Ctrl+C to quit.")
     listener.start()  # asks "Which format are we playing?" unless one is configured

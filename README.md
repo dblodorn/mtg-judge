@@ -2,15 +2,26 @@
 
 A fully-offline voice assistant that answers Magic: The Gathering rules questions like a judge. Runs on a Raspberry Pi 5.
 
-## Quick Start (Mac or Linux desktop)
+## Getting started
 
 ```bash
 git clone https://github.com/dblodorn/mtg-judge.git
 cd mtg-judge
-make setup      # venv (Python 3.11/3.12) + Ollama + models + corpus + index
-make ask Q="Does protection from red stop Lightning Bolt?"   # text-only smoke test
-make run        # voice mode
+make quickstart        # or: bash scripts/getting_started.sh   (add --pi on a Raspberry Pi)
+make run               # voice judge
 ```
+
+`make quickstart` is safe to re-run; it skips whatever's already done:
+1. Checks the system. Python 3.11/3.12 is required; on Linux it also needs PortAudio and python3-venv.
+2. Creates `.venv` and installs the dependencies.
+3. Installs Ollama and pulls `qwen3:8b` and `nomic-embed-text`.
+4. Gets the rules and card index. It downloads a published snapshot if `MTG_JUDGE_ARTIFACTS` or `~/Dropbox/mtg-judge-artifacts` has one; otherwise it builds the index, which takes about 30 minutes on a Mac.
+5. Answers one question as a text-only smoke test.
+6. Shows which microphone and speaker it will use.
+
+**macOS:** the first `make run` makes macOS ask your terminal app for microphone access, so click Allow. If the judge prints "Waiting for the microphone…", enable your terminal under System Settings → Privacy & Security → Microphone and restart it.
+
+Text-only, no audio: `make ask Q="Does protection from red stop Lightning Bolt?"`
 
 At startup the judge asks **"Which format are we playing?"**. Answer "Modern", "EDH", "Legacy" and so on. Say "Judge, switch to Pioneer" any time to change it, or set `format:` in the config (or `--format modern`) to skip the question. The format is used for legality questions: each named card's legality in that format goes into the context.
 
@@ -81,6 +92,17 @@ sudo systemctl daemon-reload && sudo systemctl enable --now mtg-judge-update.tim
 ```
 
 At startup the judge prints the data versions it loaded (`📖 Rules 20260925 · cards as of …`).
+
+### Data artifacts (index + corpus snapshots)
+
+Large data stays out of git. `make publish` packs the built index and a raw-corpus snapshot into an immutable, versioned artifact with a sha256 manifest. `make fetch-data` installs one (`latest` by default), checksum-verified. Use it to put the index on a Pi without building it there.
+
+```
+<root>/latest.json
+<root>/<date>_cr<CR date>_cards<Scryfall date>/{manifest.json, index.tar.gz, corpus.tar.gz}
+```
+
+The root is `MTG_JUDGE_ARTIFACTS`. It defaults to `~/Dropbox/mtg-judge-artifacts`, which the Dropbox app syncs. `fetch_data.py --source` also takes an HTTPS base URL. The artifacts contain Wizards' rules text verbatim, so keep the storage private. Moving to Cloudflare R2 (S3-compatible) means adding a backend; the layout doesn't change.
 
 ### Metagame
 

@@ -11,6 +11,7 @@ A fully offline voice MTG rules judge. It is developed on a Mac and deployed to 
 Python 3.11/3.12. The Makefile picks `python3.12`/`python3.11` from PATH (macOS system Python is 3.9). Everything runs from the repo root, because paths like `config/`, `index/` and `corpus/` are relative.
 
 ```bash
+make quickstart             # idempotent first run: checks, venv, Ollama+models, index (download or build), smoke test
 make setup                  # venv + Ollama/models + corpus + index
 make test                   # unit tests (-m "not integration"); no Ollama needed
 .venv/bin/pytest tests/test_retriever.py::test_mmr_returns_k_results   # single test
@@ -23,6 +24,7 @@ bash scripts/benchmark_models.sh "m1 m2"   # model comparison under config/pi.ya
 make corpus && make index   # refetch + reparse + reindex
 make sync-pi PI=user@host   # rsync code + index/ to the Pi
 make update                 # refetch rules/cards/rulings + metagame, incremental reindex, "what changed" report
+make publish / fetch-data   # versioned index + corpus snapshot ↔ MTG_JUDGE_ARTIFACTS (default ~/Dropbox/mtg-judge-artifacts); sha256 manifest
 make metagame FORMAT=modern # MTGO decklists (mtgo.com, 6 months) → corpus/metagame/<fmt>/report.md + cards.json
 ```
 

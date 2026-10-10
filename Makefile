@@ -1,4 +1,4 @@
-.PHONY: setup setup-venv setup-ollama corpus index update metagame run ask test eval eval-llm eval-hard lint clean sync-pi
+.PHONY: quickstart setup setup-venv setup-ollama corpus index update metagame publish fetch-data run ask test eval eval-llm eval-hard lint clean sync-pi
 
 # Newest supported interpreter on PATH (project needs 3.11 or 3.12)
 PYTHON ?= $(shell command -v python3.12 || command -v python3.11 || echo python3)
@@ -6,6 +6,10 @@ PY := .venv/bin/python
 # Pi deploy target, e.g. `make sync-pi PI=pi@mtg-judge.local`
 PI ?= pi@raspberrypi.local
 PI_DIR ?= ~/mtg-judge
+
+# First run: checks, installs, downloads (or builds) the index, smoke-tests. Re-runnable.
+quickstart:
+	bash scripts/getting_started.sh
 
 setup: setup-venv setup-ollama corpus index
 
@@ -26,6 +30,14 @@ index:
 # Refresh rules, cards (new sets), rulings, index and metagame; prints what changed
 update:
 	$(PY) scripts/update.py
+
+# Versioned index + corpus snapshot → MTG_JUDGE_ARTIFACTS (default ~/Dropbox/mtg-judge-artifacts)
+publish:
+	$(PY) scripts/publish_data.py
+
+# Install a published snapshot (latest by default), sha256-verified — use on the Pi
+fetch-data:
+	$(PY) scripts/fetch_data.py
 
 # MTGO metagame for one format: make metagame FORMAT=legacy
 FORMAT ?= modern
