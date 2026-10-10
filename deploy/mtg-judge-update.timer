@@ -1,0 +1,11 @@
+[Unit]
+Description=Weekly MTG Judge data update
+
+[Timer]
+# Sundays 04:00; runs at next boot if the Pi was off
+OnCalendar=Sun *-*-* 04:00:00
+Persistent=true
+RandomizedDelaySec=30m
+
+[Install]
+WantedBy=timers.target

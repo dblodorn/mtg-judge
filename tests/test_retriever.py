@@ -4,10 +4,7 @@ Most tests mock the embeddings + ChromaDB to avoid requiring a live index.
 Integration tests (marked @pytest.mark.integration) require Ollama + built index.
 """
 
-import json
-from unittest.mock import patch, MagicMock
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from src.retriever import HybridRetriever
 
@@ -132,13 +129,62 @@ def test_mmr_returns_k_results():
     retriever = _make_mock_retriever(k=3)
 
     candidates = [
-        {"id": f"c{i}", "text": f"chunk {i}", "fused_score": 0.5} for i in range(10)
+        {"id": f"c{i}", "text": f"chunk {i}", "fused_score": 1.0 - i / 10} for i in range(10)
     ]
 
-    with patch.object(retriever.emb, "embed", return_value=[0.1] * 768):
-        result = retriever._mmr("query", candidates, k=3)
+    retriever.col.get.return_value = {
+        "ids": [c["id"] for c in candidates],
+        "embeddings": [[float(i == j) for j in range(16)] for i in range(10)],
+    }
+    result = retriever._mmr("query", candidates, k=3, query_emb=[1.0] + [0.0] * 15)
 
     assert len(result) == 3
+    assert result[0]["id"] == "c0"  # highest fused score first
+    retriever.emb.embed.assert_not_called()  # uses stored embeddings, no re-embedding
+
+
+def test_mmr_falls_back_to_fused_order_without_embeddings():
+    retriever = _make_mock_retriever(k=2)
+    retriever.emb.embed.side_effect = ConnectionError("ollama down")
+    candidates = [{"id": f"c{i}", "text": "t", "fused_score": i / 10} for i in range(5)]
+
+    result = retriever._mmr("query", candidates, k=2)
+
+    assert [c["id"] for c in result] == ["c4", "c3"]
+
+
+def test_trim_parent_keeps_heading_and_window():
+    retriever = _make_mock_retriever()
+    retriever.max_parent_chars = 200
+    lines = ["702.19 Trample"] + [f"702.19{chr(97 + i)} " + "x" * 40 for i in range(10)]
+
+    trimmed = retriever._trim_parent("\n".join(lines), "702.19f ")
+
+    assert trimmed.startswith("702.19 Trample")
+    assert "702.19f" in trimmed
+    assert "702.19a" not in trimmed
+
+
+def test_direct_lookups_pin_rule_parent_and_cards():
+    retriever = _make_mock_retriever()
+    retriever.parents = {
+        "cr:702.16": {"id": "cr:702.16", "source": "cr", "section": "702.16", "text": "702.16 Protection\n702.16a ..."},
+        "scryfall:abc": {"id": "scryfall:abc", "source": "scryfall", "name": "Lightning Bolt", "text": "Lightning Bolt — Instant"},
+    }
+    retriever.card_ids = {"lightning bolt": "scryfall:abc"}
+
+    pinned = retriever._direct_lookups({"rule_numbers": ["702.16a"], "mentioned_cards": ["Lightning Bolt"]})
+
+    assert [d["id"] for d in pinned] == ["cr:702.16", "scryfall:abc"]
+    assert pinned[0]["child_id"] == "cr:702.16a"
+
+
+def test_cap_context_respects_budget():
+    retriever = _make_mock_retriever(k=8)
+    retriever.max_context_chars = 100
+    docs = [{"id": str(i), "text": "x" * 60} for i in range(5)]
+
+    assert len(retriever._cap_context(docs)) == 1
 
 
 def _make_mock_retriever(k: int = 8) -> HybridRetriever:
@@ -152,4 +198,70 @@ def _make_mock_retriever(k: int = 8) -> HybridRetriever:
         r.rrf_k = 60
         r.mmr_lambda = 0.5
         r.parents = {}
+        r.col = MagicMock()
         return r
+
+
+def test_pinned_card_keeps_most_relevant_rulings():
+    retriever = _make_mock_retriever()
+    retriever.rulings_per_card = 1
+    card = {"id": "scryfall:x", "text": "Card — Land\nRulings:\n- (2021) about mana\n- (2021) about blood moon\n- (2021) about tokens"}
+    retriever.col.get.return_value = {
+        "ids": ["scryfall:x:r0", "scryfall:x:r1", "scryfall:x:r2"],
+        "embeddings": [[1.0, 0.0], [0.0, 1.0], [0.7, 0.7]],
+    }
+
+    text = retriever._card_with_rulings(card, query_emb=[0.0, 1.0])
+
+    assert text == "Card — Land\nRulings:\n- (2021) about blood moon"
+
+
+def test_expand_card_names_swaps_name_for_card_description():
+    retriever = _make_mock_retriever()
+    retriever.parents = {"scryfall:u": {
+        "id": "scryfall:u",
+        "type": "Enchantment Land — Urza's Saga",
+        "text": "Urza's Saga — Enchantment Land — Urza's Saga\nIII — Search your library.\nRulings:\n- (2021) keeps abilities",
+    }}
+    retriever.card_ids = {"urza's saga": "scryfall:u"}
+
+    expanded = retriever._expand_card_names("What happens to my Urza's Saga?", {"mentioned_cards": ["Urza's Saga"]})
+
+    assert expanded == "What happens to my (Enchantment Land — Urza's Saga: III — Search your library.)?"
+
+
+def test_source_of_chunk_ids():
+    assert HybridRetriever._source_of("cr:702.16a") == "cr"
+    assert HybridRetriever._source_of("ipg:2.1:3") == "ipg"
+    assert HybridRetriever._source_of("scryfall:abc-123") == "scryfall"
+    assert HybridRetriever._source_of("scryfall:abc-123:r2") == "ruling"
+
+
+def test_mmr_skips_near_duplicates():
+    """A near-duplicate of the top doc loses to a less relevant but different one."""
+    retriever = _make_mock_retriever()
+    candidates = [{"id": c, "text": c, "fused_score": f} for c, f in [("a", 1.0), ("a2", 0.9), ("b", 0.5), ("z", 0.0)]]
+    retriever.col.get.return_value = {
+        "ids": ["a", "a2", "b", "z"],
+        "embeddings": [[1.0, 0.0], [0.99, 0.01], [0.0, 1.0], [0.7, 0.7]],
+    }
+
+    result = retriever._mmr("q", candidates, k=2, query_emb=[1.0, 0.0])
+
+    assert [c["id"] for c in result] == ["a", "b"]
+
+
+def test_pinned_card_gets_legality_for_current_format():
+    retriever = _make_mock_retriever()
+    retriever.parents = {"scryfall:u": {"id": "scryfall:u", "source": "scryfall", "name": "Urza's Saga",
+                                        "text": "Urza's Saga — Enchantment Land",
+                                        "legalities": {"modern": "legal", "pauper": "not_legal"}}}
+    retriever.card_ids = {"urza's saga": "scryfall:u"}
+
+    modern = retriever._direct_lookups({"mentioned_cards": ["Urza's Saga"], "format": "modern"})
+    pauper = retriever._direct_lookups({"mentioned_cards": ["Urza's Saga"], "format": "pauper"})
+    none = retriever._direct_lookups({"mentioned_cards": ["Urza's Saga"]})
+
+    assert modern[0]["text"].endswith("Modern legality: legal")
+    assert pauper[0]["text"].endswith("Pauper legality: not legal")
+    assert "legality" not in none[0]["text"]

@@ -1,31 +1,34 @@
-# MTG Judge Voice Assistant Configuration
+# MTG Judge Voice Assistant Configuration (desktop / Mac profile)
+# Other profiles (config/pi.yaml) only list the keys they override.
+# Env overrides: LLM_MODEL, EMBED_MODEL, OLLAMA_HOST. Profile: MTG_JUDGE_CONFIG.
 
 # Moonshine STT
 language: en
-moonshine_model_arch: null  # null = auto (tiny on Pi, medium on desktop)
+moonshine_model_arch: null  # null = library default (medium-streaming); tiny | base | *-streaming
+wake_word: judge            # only answer lines starting "Judge, …"; null = answer everything
+format: null                # modern, legacy, commander…; null = ask by voice at startup
+metagame_formats: [modern]  # `make update` refreshes these formats' MTGO metagame (last 6 months)
 
 # Ollama
-llm_model: llama3.1:8b
-embed_model: nomic-embed-text
+llm_model: qwen3:8b       # most accurate on the hard set (with thinking); same model as the Pi profile — docs/benchmarks.md
+embed_model: nomic-embed-text   # must match the model the index was built with
 ollama_host: http://localhost:11434
+num_ctx: 8192                   # LLM context window (tokens): prompt (~1k) + reasoning
+think: true                     # reasoning (qwen3): +accuracy, ~500 extra output tokens per answer
+max_tokens: 3072                # cap on generated tokens incl. reasoning (stops runaway reasoning)
 
 # RAG
 index_path: index/
-collection: mtg_judge
-k: 8                      # top-k chunks after MMR
+k: 4                      # top-k chunks after MMR (k=8 scored no better: docs/benchmarks.md)
 rrf_k: 60                 # RRF constant
 mmr_lambda: 0.5           # 0=max diversity, 1=max relevance
-
-# Retrieval strategy flags (Pi = all false; dev box = can enable)
-enable_reranking: false   # cross-encoder reranking (sentence-transformers)
-enable_hyde: false        # hypothetical document embeddings
-enable_compression: false # contextual compression
-enable_multi_query: false # multi-query retrieval
+max_parent_chars: 900     # long sections are trimmed to heading + matched sub-rule ± 2
+max_context_chars: 3000   # total context budget sent to the LLM
 
 # TTS
 tts_language: en_us
-tts_voice: amy
+tts_voice: piper_en_US-amy-medium   # see moonshine_voice.list_tts_voices("en_us")
 
-# Audio (null = system default)
+# Audio (null = system default; device index or name)
 input_device: null
 output_device: null

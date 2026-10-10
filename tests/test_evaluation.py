@@ -11,8 +11,9 @@ from pathlib import Path
 
 import pytest
 
-from src.retriever import HybridRetriever
+from src.config import load_config
 from src.query_router import QueryRouter
+from src.retriever import HybridRetriever
 
 
 @pytest.fixture
@@ -20,14 +21,22 @@ def eval_cases():
     return json.loads(Path("tests/fixtures/eval_cases.json").read_text())
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def retriever():
-    return HybridRetriever(k=8)
+    config = load_config()
+    return HybridRetriever(
+        index_path=config["index_path"],
+        k=config["k"],
+        embed_model=config["embed_model"],
+        ollama_host=config["ollama_host"],
+        max_parent_chars=config["max_parent_chars"],
+        max_context_chars=config["max_context_chars"],
+    )
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def router():
-    return QueryRouter()
+    return QueryRouter(card_names_path=f"{load_config()['index_path'].rstrip('/')}/card_names.json")
 
 
 def _parent_section(section: str) -> str:
@@ -42,7 +51,7 @@ def test_retrieval_returns_expected_sources(retriever, router, eval_cases):
     """For each eval case, verify retrieval returns expected sources."""
     for case in eval_cases:
         route = router.route(case["question"])
-        results = retriever.retrieve(case["question"], sources=route.get("sources"))
+        results = retriever.retrieve(case["question"], route=route)
 
         retrieved_sources = {r.get("source") for r in results}
         for expected_source in case["expected_sources"]:
@@ -61,7 +70,7 @@ def test_retrieval_returns_expected_sections(retriever, router, eval_cases):
 
     for case in cases_with_sections:
         route = router.route(case["question"])
-        results = retriever.retrieve(case["question"], sources=route.get("sources"))
+        results = retriever.retrieve(case["question"], route=route)
 
         retrieved_sections = {
             _parent_section(r.get("section", r.get("parent_section", "")))
@@ -70,7 +79,9 @@ def test_retrieval_returns_expected_sections(retriever, router, eval_cases):
         retrieved_sections.discard("")
 
         assert any(
-            exp in retrieved_sections for exp in case["expected_sections_any"]
+            s == exp or s.startswith(exp + ".")
+            for exp in case["expected_sections_any"]
+            for s in retrieved_sections
         ), (
             f"None of {case['expected_sections_any']} found in {retrieved_sections}\n"
             f"  Question: {case['question']!r}"
@@ -82,7 +93,7 @@ def test_retrieval_returns_expected_keywords(retriever, router, eval_cases):
     """For each eval case, verify expected keywords appear in retrieved text."""
     for case in eval_cases:
         route = router.route(case["question"])
-        results = retriever.retrieve(case["question"], sources=route.get("sources"))
+        results = retriever.retrieve(case["question"], route=route)
 
         all_text = " ".join(r.get("text", "") for r in results).lower()
         for kw in case.get("expected_keywords", []):
@@ -100,7 +111,7 @@ def test_retrieval_returns_expected_cards(retriever, router, eval_cases):
 
     for case in card_cases:
         route = router.route(case["question"])
-        results = retriever.retrieve(case["question"], sources=route.get("sources"))
+        results = retriever.retrieve(case["question"], route=route)
 
         all_names = " ".join(
             r.get("name", "") + " " + r.get("text", "") for r in results

@@ -88,7 +88,10 @@ async def speak(request: Request, text: bytes = File(...)):
     try:
         from moonshine_voice import TextToSpeech
 
-        tts = TextToSpeech(language="en_us", voice="amy")
+        from src.config import load_config
+
+        config = load_config()
+        tts = TextToSpeech().language(config["tts_language"]).voice(config["tts_voice"]).load()
         text_str = text.decode("utf-8")
         wav_bytes = tts.synthesize(text_str)
         return Response(content=wav_bytes, media_type="audio/wav")

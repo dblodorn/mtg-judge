@@ -1,0 +1,19 @@
+# Weekly data refresh for the Pi (rules, new sets, rulings, metagame). Install with the timer:
+#   sudo cp deploy/mtg-judge-update.{service,timer} /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now mtg-judge-update.timer
+#   systemctl list-timers mtg-judge-update     # next run
+#   journalctl -u mtg-judge-update            # last run's "What changed" report
+[Unit]
+Description=MTG Judge data update
+Wants=network-online.target ollama.service
+After=network-online.target ollama.service
+
+[Service]
+Type=oneshot
+User=pi
+WorkingDirectory=/home/pi/mtg-judge
+Environment=MTG_JUDGE_CONFIG=config/pi.yaml
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/pi/mtg-judge/.venv/bin/python scripts/update.py
+# Reload the judge so it picks up the new index
+ExecStartPost=+/bin/systemctl restart mtg-judge

@@ -3,8 +3,8 @@ name = "mtg-judge"
 version = "0.1.0"
 requires-python = ">=3.11,<3.13"
 dependencies = [
-  "moonshine-voice>=0.0.68",
-  "ollama>=0.3.0",
+  "moonshine-voice==0.1.5",  # 0.1.x builder API; earlier constructor kwargs raise TypeError
+  "ollama>=0.4.0",  # structured outputs (format=<json schema>)
   "chromadb>=0.5.0",
   "bm25s>=0.1.7",
   "pydantic>=2.0",
@@ -13,6 +13,8 @@ dependencies = [
   "pyyaml>=6.0",
   "tqdm>=4.66",
   "ijson>=3.0",
+  "beautifulsoup4>=4.12",
+  "lxml>=5.0",
   "fastapi>=0.115.0",
   "uvicorn[standard]>=0.30.0",
   "slowapi>=0.1.9",
@@ -20,7 +22,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "pytest-cov", "ruff", "sentence-transformers>=2.0"]
+dev = ["pytest>=8.0", "pytest-cov", "ruff"]
 
 [build-system]
 requires = ["setuptools>=61.0"]
@@ -29,6 +31,14 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["src*"]
+
+[tool.ruff]
+line-length = 150
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+ignore = ["E402"]  # sys.path.insert(0, ".") precedes local imports
 
 [tool.pytest.ini_options]
 markers = [

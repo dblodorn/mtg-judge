@@ -1,0 +1,9 @@
+# Raspberry Pi 5 (8GB) profile — layered over config/default.yaml.
+# Use: MTG_JUDGE_CONFIG=config/pi.yaml make run
+#
+# Same model and retrieval budget as the desktop profile; only memory and audio differ.
+
+moonshine_model_arch: small-streaming   # base-streaming is not published for English
+num_ctx: 4096                  # qwen3:8b (5.2 GB) + 4k KV cache fits 8 GB; 8k is too tight
+max_tokens: 3000               # prompt (~1k) + reasoning must fit num_ctx
+tts_voice: piper_en_US-amy-low

@@ -4,9 +4,8 @@ import sys
 
 sys.path.insert(0, ".")
 
-from src.retriever import HybridRetriever
-from src.query_router import QueryRouter
-from src.llm import JudgeLLM
+from src.app import build_pipeline
+from src.config import load_config
 
 
 class JudgePipeline:
@@ -22,14 +21,13 @@ class JudgePipeline:
         return cls._instance
 
     def __init__(self, index_path: str = "demo/index/"):
-        self.retriever = HybridRetriever(index_path=index_path, k=8)
-        self.router = QueryRouter()
-        self.llm = JudgeLLM(model="llama3.1:8b")
+        config = {**load_config(), "index_path": index_path}
+        self.retriever, self.router, self.llm = build_pipeline(config)
 
     def ask(self, question: str) -> dict:
         """Process a text question → return ruling + retrieved chunks."""
         route = self.router.route(question)
-        chunks = self.retriever.retrieve(question, sources=route.get("sources"))
+        chunks = self.retriever.retrieve(question, route=route)
         ruling = self.llm.answer(question, chunks)
         return {
             "answer": ruling.answer,

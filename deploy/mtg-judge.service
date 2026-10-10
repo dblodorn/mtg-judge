@@ -1,0 +1,24 @@
+# systemd unit for the Raspberry Pi. Install:
+#   sudo cp deploy/mtg-judge.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now mtg-judge
+#   journalctl -u mtg-judge -f        # live transcript + rulings
+# Edit User/WorkingDirectory if the repo isn't at /home/pi/mtg-judge.
+[Unit]
+Description=MTG Judge voice assistant
+Wants=ollama.service sound.target
+After=ollama.service sound.target network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/mtg-judge
+Environment=MTG_JUDGE_CONFIG=config/pi.yaml
+Environment=PYTHONUNBUFFERED=1
+# Wait for Ollama's API before starting (the model warm-load needs it)
+ExecStartPre=/bin/sh -c 'for i in $(seq 1 60); do curl -sf http://localhost:11434/api/version >/dev/null && exit 0; sleep 1; done; exit 1'
+ExecStart=/home/pi/mtg-judge/.venv/bin/python -m src.app
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

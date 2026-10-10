@@ -1,0 +1,802 @@
+[
+  {
+    "id": "saga-blood-moon-current",
+    "topic": "urzas-saga",
+    "question": "My opponent has Blood Moon on the battlefield. What happens to my Urza's Saga?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Urza's Saga",
+      "Blood Moon"
+    ],
+    "expected_sections_any": [
+      "714",
+      "704.5",
+      "305.7"
+    ],
+    "answer_any": [
+      [
+        "not sacrific",
+        "isn't sacrific",
+        "won't be sacrific",
+        "is not sacrificed",
+        "stays on the battlefield",
+        "remains on the battlefield"
+      ],
+      [
+        "mountain"
+      ]
+    ],
+    "truth": "It becomes a Mountain and loses its chapter abilities. Its final chapter number is 0 (714.2d), but since the June 2025 update the sacrifice SBA only applies to Sagas with one or more chapter abilities (714.4, 704.5s), and it gets no more lore counters (714.3c). It stays and taps for {R}.",
+    "grounding": "CR 714.2d, 714.3c, 714.4, 704.5s, 305.7",
+    "notes": "draftsim #5 says Blood Moon destroys Urza's Saga. That was true before the June 2025 Saga rules update and is wrong now, so this case tests current rules over stale training data.",
+    "source": "https://draftsim.com/strange-mtg-rules-interactions/"
+  },
+  {
+    "id": "saga-blood-moon-after-chapter-ii",
+    "topic": "urzas-saga",
+    "question": "My Urza's Saga already resolved chapter two. If my opponent then casts Blood Moon, can I still make Construct tokens with it?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Urza's Saga",
+      "Blood Moon"
+    ],
+    "expected_sections_any": [
+      "305.7",
+      "613"
+    ],
+    "truth": "Yes. Blood Moon removes abilities from the land's rules text and old land types, but not abilities granted by other effects (305.7). Chapters I and II granted their abilities, and official ruling: it keeps them for as long as it's on the battlefield.",
+    "grounding": "CR 305.7; Urza's Saga ruling 2021-06-18",
+    "source": "Gemini AI Overview (user-provided); conclusion correct",
+    "verdict": "yes"
+  },
+  {
+    "id": "saga-blood-moon-not-basic",
+    "topic": "urzas-saga",
+    "question": "Does Blood Moon turn Urza's Saga into a basic Mountain?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Urza's Saga",
+      "Blood Moon"
+    ],
+    "truth": "No. It becomes a Mountain (land type), but Blood Moon doesn't affect supertypes, so it doesn't become basic, and it isn't named Mountain.",
+    "grounding": "Blood Moon ruling 2020-08-07; CR 205.4, 305.7",
+    "source": "Gemini AI Overview (user-provided) claims 'basic Mountain', which is wrong",
+    "verdict": "no"
+  },
+  {
+    "id": "saga-chapter-iii-mana-cost",
+    "topic": "urzas-saga",
+    "question": "Can Urza's Saga's chapter three find an artifact with mana cost U, or one that costs X?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Urza's Saga"
+    ],
+    "truth": "No. It finds only a card with actual mana cost {0} or {1}, not mana value 0 or 1. {U} and {X} don't qualify.",
+    "grounding": "Urza's Saga ruling 2021-06-18",
+    "source": "Gemini AI Overview (user-provided) says 'mana value', which is wrong",
+    "verdict": "no"
+  },
+  {
+    "id": "saga-chapter-iii-no-target",
+    "topic": "urzas-saga",
+    "question": "Can my opponent destroy the artifact that Urza's Saga's chapter three is going to fetch, in response to the trigger?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Urza's Saga"
+    ],
+    "answer_any": [
+      [
+        "doesn't target",
+        "does not target",
+        "no target",
+        "not target",
+        "isn't targeted",
+        "on resolution",
+        "when it resolves",
+        "as it resolves",
+        "still in your library",
+        "in the library"
+      ]
+    ],
+    "truth": "No. Chapter III doesn't target. You search your library as it resolves, so there's no artifact on the battlefield to respond to until it's already there.",
+    "grounding": "Urza's Saga oracle text; CR 115 (targets), 608.2",
+    "source": "Gemini AI Overview (user-provided) says opponents can 'destroy the targets', which is wrong"
+  },
+  {
+    "id": "saga-remove-lore-counter",
+    "topic": "urzas-saga",
+    "question": "If I remove a lore counter from Urza's Saga with Hex Parasite while its chapter three ability is on the stack, what happens?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Urza's Saga",
+      "Hex Parasite"
+    ],
+    "expected_sections_any": [
+      "714",
+      "704.5"
+    ],
+    "answer_any": [
+      [
+        "not sacrific",
+        "isn't sacrific",
+        "won't be sacrific",
+        "stays",
+        "remains"
+      ],
+      [
+        "again",
+        "next turn",
+        "next main phase",
+        "trigger"
+      ]
+    ],
+    "truth": "Chapter III still resolves. Afterward it has 2 lore counters, fewer than its final chapter number of 3, so it isn't sacrificed (714.4). At your next precombat main phase it gets a lore counter, going from 2 to 3, and chapter III triggers again (714.2b, 714.3c).",
+    "grounding": "CR 714.2b, 714.3c, 714.4",
+    "source": "Gemini AI Overview (user-provided) says 'locking it on Chapter II', which is misleading because chapter III re-triggers"
+  },
+  {
+    "id": "grave-troll-reanimate",
+    "topic": "zone-change",
+    "question": "If Golgari Grave-Troll is the only creature card in my graveyard and I Reanimate it, how many +1/+1 counters does it enter with?",
+    "expected_sources": [],
+    "expected_cards": [
+      "Golgari Grave-Troll"
+    ],
+    "answer_any": [
+      [
+        "one",
+        "1",
+        "itself"
+      ]
+    ],
+    "truth": "One. Returning directly from the graveyard to the battlefield, its first ability counts itself.",
+    "grounding": "Golgari Grave-Troll ruling 2018-12-07",
+    "source": "https://draftsim.com/strange-mtg-rules-interactions/ (#10)"
+  },
+  {
+    "id": "crag-puca-layers",
+    "topic": "layers",
+    "question": "Crag Puca is a 2/4. I switch its power and toughness, then cast Reckless Charge on it for +3/+0. What is its power and toughness?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Crag Puca",
+      "Reckless Charge"
+    ],
+    "expected_sections_any": [
+      "613"
+    ],
+    "answer_any": [
+      [
+        "4/5"
+      ]
+    ],
+    "truth": "4/5. Modifications (+3/+0, layer 7c) apply before switching (layer 7d) regardless of timestamp: 2/4 → 5/4 → switched 4/5.",
+    "grounding": "CR 613.4c, 613.4d; Crag Puca ruling 2021-03-19",
+    "source": "https://draftsim.com/strange-mtg-rules-interactions/ (#3)"
+  },
+  {
+    "id": "damage-doubler-order",
+    "topic": "replacement",
+    "question": "My opponent controls Furnace of Rath and Torbran, Thane of Red Fell and Shocks me. Who chooses the order those damage effects apply in?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Furnace of Rath",
+      "Torbran, Thane of Red Fell"
+    ],
+    "expected_sections_any": [
+      "616"
+    ],
+    "answer_any": [
+      [
+        "you choose",
+        "you decide",
+        "you get to",
+        "affected player",
+        "player being dealt",
+        "player receiving",
+        "player who is being dealt",
+        "player taking"
+      ]
+    ],
+    "truth": "You do, as the affected player (616.1). Doubling then +2 is 6; +2 then doubling is 8.",
+    "grounding": "CR 616.1",
+    "source": "https://draftsim.com/strange-mtg-rules-interactions/ (#9)"
+  },
+  {
+    "id": "ninjutsu-after-first-strike",
+    "topic": "combat",
+    "question": "After first strike combat damage, can I ninjutsu Ninja of the Deep Hours in by returning my unblocked Battlefield Raptor that already dealt damage?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Ninja of the Deep Hours"
+    ],
+    "expected_sections_any": [
+      "510",
+      "702.49"
+    ],
+    "truth": "Yes. There's a second combat damage step (510.4). The Raptor is still an unblocked attacking creature, so ninjutsu can be activated, and the Ninja deals regular combat damage.",
+    "grounding": "CR 510.4, 702.49",
+    "source": "https://draftsim.com/strange-mtg-rules-interactions/ (#11)",
+    "verdict": "yes"
+  },
+  {
+    "id": "special-action-land",
+    "topic": "special-actions",
+    "question": "Can my opponent respond to me playing a land?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_sections_any": [
+      "116",
+      "305"
+    ],
+    "truth": "No. Playing a land is a special action and doesn't use the stack (116.2a, 305.1).",
+    "grounding": "CR 116.2a",
+    "source": "https://draftsim.com/strange-mtg-rules-interactions/ (#8)",
+    "verdict": "no"
+  },
+  {
+    "id": "saga-chapter-iii-land-no-mana-cost",
+    "topic": "urzas-saga",
+    "question": "Can Urza's Saga's chapter three fetch Darksteel Citadel?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Urza's Saga"
+    ],
+    "expected_sections_any": [
+      "202"
+    ],
+    "verdict": "no",
+    "truth": "No. Lands have no mana cost (202.1b), and chapter III needs an actual mana cost of {0} or {1}. Mana value 0 isn't enough.",
+    "grounding": "CR 202.1b; Urza's Saga ruling 2021-06-18",
+    "source": "Urza's Saga oracle text + official rulings (Scryfall, 2021-06-18); research 2026-10-09"
+  },
+  {
+    "id": "saga-chapter-iii-retrofitter",
+    "topic": "urzas-saga",
+    "question": "Can Urza's Saga's chapter three fetch Retrofitter Foundry?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Urza's Saga",
+      "Retrofitter Foundry"
+    ],
+    "verdict": "yes",
+    "truth": "Yes. Retrofitter Foundry has mana cost {1}.",
+    "grounding": "Urza's Saga oracle text; Retrofitter Foundry mana cost {1}",
+    "source": "Urza's Saga oracle text + official rulings (Scryfall, 2021-06-18); research 2026-10-09"
+  },
+  {
+    "id": "saga-stifle-chapter-iii",
+    "topic": "urzas-saga",
+    "question": "If my opponent casts Stifle on Urza's Saga's chapter three trigger, what happens to the Saga?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Urza's Saga",
+      "Stifle"
+    ],
+    "expected_sections_any": [
+      "714",
+      "704.5"
+    ],
+    "answer_any": [
+      [
+        "sacrific"
+      ]
+    ],
+    "answer_none": [
+      "not sacrific",
+      "isn't sacrific",
+      "won't be sacrific",
+      "not be sacrific",
+      "stays on",
+      "remains on"
+    ],
+    "truth": "You don't get the artifact, and the Saga is still sacrificed. Once the countered ability has left the stack, it has 3 lore counters ≥ its final chapter number (714.4, 704.5s, 701.6a).",
+    "grounding": "CR 701.6a, 714.4, 704.5s",
+    "source": "Urza's Saga oracle text + official rulings (Scryfall, 2021-06-18); research 2026-10-09"
+  },
+  {
+    "id": "saga-tidebinder-chapter-iii",
+    "topic": "urzas-saga",
+    "question": "If my opponent counters Urza's Saga's chapter three trigger with Tishana's Tidebinder, does the Saga lose its abilities?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Urza's Saga",
+      "Tishana's Tidebinder"
+    ],
+    "verdict": "no",
+    "truth": "No. Tidebinder only removes abilities from an artifact, creature, or planeswalker, and Urza's Saga is an Enchantment Land. The ability is still countered, and the Saga is then sacrificed (714.4).",
+    "grounding": "Tishana's Tidebinder oracle text; CR 714.4",
+    "source": "Urza's Saga oracle text + official rulings (Scryfall, 2021-06-18); research 2026-10-09"
+  },
+  {
+    "id": "saga-pithing-needle",
+    "topic": "urzas-saga",
+    "question": "My opponent named Urza's Saga with Pithing Needle. Can I still make Construct tokens with it?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Urza's Saga",
+      "Pithing Needle"
+    ],
+    "expected_sections_any": [
+      "605"
+    ],
+    "verdict": "no",
+    "truth": "No. The Construct ability is an activated ability that isn't a mana ability, so Needle stops it. Its granted '{T}: Add {C}' is a mana ability (605.1a) and still works.",
+    "grounding": "Pithing Needle oracle text; CR 605.1a",
+    "source": "Urza's Saga oracle text + official rulings (Scryfall, 2021-06-18); research 2026-10-09"
+  },
+  {
+    "id": "saga-chapter-i-respond-for-mana",
+    "topic": "urzas-saga",
+    "question": "The turn I play Urza's Saga, can I tap it for mana in response to its chapter one trigger?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Urza's Saga"
+    ],
+    "expected_sections_any": [
+      "714"
+    ],
+    "verdict": "no",
+    "truth": "No. Urza's Saga has no mana ability of its own. It gains '{T}: Add {C}' only when chapter I resolves.",
+    "grounding": "Urza's Saga oracle text; CR 714.2b, 714.3a",
+    "source": "Urza's Saga oracle text + official rulings (Scryfall, 2021-06-18); research 2026-10-09"
+  },
+  {
+    "id": "saga-construct-counts-itself",
+    "topic": "urzas-saga",
+    "question": "I control Urza's Saga and no other artifacts. How big is the Construct token from chapter two?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Urza's Saga"
+    ],
+    "answer_any": [
+      [
+        "1/1"
+      ]
+    ],
+    "truth": "1/1. The token is an artifact and counts itself. Urza's Saga is an Enchantment Land, not an artifact, so it doesn't count.",
+    "grounding": "Urza's Saga oracle text (token is an 'artifact creature' that gets +1/+1 per artifact you control)",
+    "source": "Urza's Saga oracle text + official rulings (Scryfall, 2021-06-18); research 2026-10-09"
+  },
+  {
+    "id": "saga-urza-tron",
+    "topic": "urzas-saga",
+    "question": "Does Urza's Saga count as one of the Urza lands for Urza's Tower?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Urza's Saga",
+      "Urza's Tower"
+    ],
+    "verdict": "no",
+    "truth": "No. It has the Urza's land type, but Urza's Tower specifically needs an Urza's Mine and an Urza's Power-Plant.",
+    "grounding": "Urza's Saga ruling 2021-06-18; Urza's Tower oracle text",
+    "source": "Urza's Saga oracle text + official rulings (Scryfall, 2021-06-18); research 2026-10-09"
+  },
+  {
+    "id": "saga-blood-moon-after-chapter-i",
+    "topic": "urzas-saga",
+    "question": "Blood Moon resolved after my Urza's Saga's chapter one but before chapter two. What mana can the Saga make?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Urza's Saga",
+      "Blood Moon"
+    ],
+    "expected_sections_any": [
+      "305.7"
+    ],
+    "answer_any": [
+      [
+        "{c}",
+        "colorless"
+      ],
+      [
+        "{r}",
+        "red"
+      ]
+    ],
+    "truth": "Either {C} or {R}. It keeps the '{T}: Add {C}' granted by chapter I, because Blood Moon doesn't remove abilities granted by other effects (305.7). As a Mountain it also has '{T}: Add {R}'. Under Blood Moon it gets no more lore counters (714.3c).",
+    "grounding": "CR 305.7, 714.3c; Blood Moon and Urza's Saga rulings",
+    "source": "Urza's Saga oracle text + official rulings (Scryfall, 2021-06-18); research 2026-10-09"
+  },
+  {
+    "id": "saga-blood-moon-leaves",
+    "topic": "urzas-saga",
+    "question": "My Urza's Saga has two lore counters under Blood Moon. If Blood Moon leaves the battlefield, what happens next?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Urza's Saga",
+      "Blood Moon"
+    ],
+    "expected_sections_any": [
+      "714"
+    ],
+    "answer_any": [
+      [
+        "next",
+        "main phase"
+      ],
+      [
+        "chapter iii",
+        "chapter three",
+        "third chapter",
+        "chapter 3",
+        "iii"
+      ]
+    ],
+    "truth": "It regains its chapter abilities, but nothing triggers right away, because chapters trigger only when lore counters are added (714.2b). At your next precombat main phase it gets a third lore counter (714.3c), chapter III triggers, and it's sacrificed after that ability leaves the stack (714.4).",
+    "grounding": "CR 714.2b, 714.3c, 714.4",
+    "source": "Urza's Saga oracle text + official rulings (Scryfall, 2021-06-18); research 2026-10-09"
+  },
+  {
+    "id": "layers-blood-moon-urborg",
+    "topic": "layers",
+    "question": "Blood Moon and Urborg, Tomb of Yawgmoth are both on the battlefield. Is my nonbasic land a Swamp?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Blood Moon",
+      "Urborg, Tomb of Yawgmoth"
+    ],
+    "expected_sections_any": [
+      "613",
+      "305.7"
+    ],
+    "verdict": "no",
+    "truth": "No. Blood Moon makes Urborg a Mountain, and Urborg loses its ability (305.7), so it turns no lands into Swamps, whatever the timestamp order. Nonbasic lands are just Mountains.",
+    "grounding": "Urborg ruling 2021-03-19; CR 305.7, 613.8",
+    "source": "official ruling (Scryfall rulings bulk); research 2026-10-09"
+  },
+  {
+    "id": "layers-humility-then-opalescence",
+    "topic": "layers",
+    "question": "If Humility entered the battlefield first and Opalescence second, what is Humility's power and toughness?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Humility",
+      "Opalescence"
+    ],
+    "expected_sections_any": [
+      "613"
+    ],
+    "answer_any": [
+      [
+        "4/4"
+      ]
+    ],
+    "truth": "4/4, as a creature enchantment with no abilities. Layer 4: Opalescence makes it a creature. Layer 6: Humility removes abilities. Layer 7b, in timestamp order: Humility sets 1/1, then Opalescence sets 4/4. Humility's effect keeps applying even though Humility lost its ability (613.6).",
+    "grounding": "Humility/Opalescence ruling 2009-10-01; CR 613.6",
+    "source": "official ruling (Scryfall rulings bulk); research 2026-10-09"
+  },
+  {
+    "id": "layers-opalescence-then-humility",
+    "topic": "layers",
+    "question": "If Opalescence entered the battlefield first and Humility second, what is Humility's power and toughness?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Humility",
+      "Opalescence"
+    ],
+    "expected_sections_any": [
+      "613"
+    ],
+    "answer_any": [
+      [
+        "1/1"
+      ]
+    ],
+    "truth": "1/1 with no abilities. In layer 7b Opalescence's 4/4 applies first and Humility's later-timestamp 1/1 overwrites it.",
+    "grounding": "Humility/Opalescence ruling 2009-10-01; CR 613.6",
+    "source": "official ruling (Scryfall rulings bulk); research 2026-10-09"
+  },
+  {
+    "id": "doubling-season-loyalty-cost",
+    "topic": "replacement",
+    "question": "I control Doubling Season and activate my planeswalker's plus one loyalty ability. How many loyalty counters does it get?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Doubling Season"
+    ],
+    "answer_any": [
+      [
+        "not doubled",
+        "isn't doubled",
+        "is not doubled",
+        "won't be doubled",
+        "only one",
+        "just one",
+        "one loyalty counter",
+        "only 1",
+        "a cost"
+      ]
+    ],
+    "answer_none": [
+      "two loyalty counters",
+      "2 loyalty counters",
+      "gets two",
+      "doubled to two"
+    ],
+    "truth": "One. Loyalty counters put on as a cost aren't doubled, because Doubling Season only affects effects. (Planeswalkers do enter with double loyalty.)",
+    "grounding": "Doubling Season ruling 2024-11-08",
+    "source": "official ruling (Scryfall rulings bulk); research 2026-10-09"
+  },
+  {
+    "id": "doubling-season-enters-loyalty",
+    "topic": "replacement",
+    "question": "Does Doubling Season double the loyalty counters a planeswalker enters with?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Doubling Season"
+    ],
+    "expected_sections_any": [
+      "306.5"
+    ],
+    "verdict": "yes",
+    "truth": "Yes. Entering with loyalty counters is a replacement effect from the planeswalker's intrinsic ability (306.5b), not a cost, so it's doubled.",
+    "grounding": "Doubling Season ruling 2024-11-08; CR 306.5b",
+    "source": "official ruling (Scryfall rulings bulk); research 2026-10-09"
+  },
+  {
+    "id": "panharmonicon-enters-with-counters",
+    "topic": "replacement",
+    "question": "With Panharmonicon out, does a creature that enters with a +1/+1 counter get an extra counter?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Panharmonicon"
+    ],
+    "verdict": "no",
+    "truth": "No. Entering with counters is a replacement effect, not a triggered ability, and Panharmonicon only doubles triggers.",
+    "grounding": "Panharmonicon ruling 2021-03-19",
+    "source": "official ruling (Scryfall rulings bulk); research 2026-10-09"
+  },
+  {
+    "id": "rest-in-peace-dies-triggers",
+    "topic": "replacement",
+    "question": "With Rest in Peace on the battlefield, does Blood Artist trigger when a creature is destroyed?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Rest in Peace",
+      "Blood Artist"
+    ],
+    "expected_sections_any": [
+      "700"
+    ],
+    "verdict": "no",
+    "truth": "No. The creature is exiled instead of going to the graveyard, so it never 'dies' (700.4).",
+    "grounding": "Rest in Peace ruling 2018-03-16; CR 700.4",
+    "source": "official ruling (Scryfall rulings bulk); research 2026-10-09"
+  },
+  {
+    "id": "leyline-living-end",
+    "topic": "replacement",
+    "question": "My opponent controls Leyline of the Void and I resolve Living End. Do the creatures I sacrifice come back?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Leyline of the Void",
+      "Living End"
+    ],
+    "verdict": "no",
+    "truth": "No. Leyline exiles the sacrificed creatures instead of putting them in your graveyard, and they aren't among the cards Living End 'exiled this way'. Creature cards that were already in your graveyard still return.",
+    "grounding": "Living End ruling 2021-03-19",
+    "source": "official ruling (Scryfall rulings bulk); research 2026-10-09"
+  },
+  {
+    "id": "cascade-split-card",
+    "topic": "mana-value",
+    "question": "Shardless Agent cascades. Can I cast Fire // Ice from the cascade?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Shardless Agent",
+      "Fire // Ice"
+    ],
+    "expected_sections_any": [
+      "709",
+      "702.85"
+    ],
+    "verdict": "no",
+    "truth": "No. In the library, a split card's mana value uses its combined cost, {1}{R}{1}{U} = 4 (709.4b), which isn't less than 3, so cascade passes it by.",
+    "grounding": "CR 709.4b, 702.85a; Shardless Agent ruling 2021-06-18",
+    "source": "official ruling (Scryfall rulings bulk); research 2026-10-09"
+  },
+  {
+    "id": "chalice-split-card-on-stack",
+    "topic": "mana-value",
+    "question": "Chalice of the Void has two counters. I cast Fire from Fire // Ice. Does Chalice counter it?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Chalice of the Void",
+      "Fire // Ice"
+    ],
+    "expected_sections_any": [
+      "709"
+    ],
+    "verdict": "yes",
+    "truth": "Yes. On the stack only the half being cast exists (709.3b), so the spell's mana value is 2.",
+    "grounding": "CR 709.3b",
+    "source": "official ruling (Scryfall rulings bulk); research 2026-10-09"
+  },
+  {
+    "id": "thalia-mana-value",
+    "topic": "mana-value",
+    "question": "Thalia, Guardian of Thraben makes my one-mana spell cost two. Does Chalice of the Void on two counter it?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Thalia, Guardian of Thraben",
+      "Chalice of the Void"
+    ],
+    "verdict": "no",
+    "truth": "No. Cost increases don't change mana value, so the spell still has mana value 1.",
+    "grounding": "Thalia ruling 2018-03-16",
+    "source": "official ruling (Scryfall rulings bulk); research 2026-10-09"
+  },
+  {
+    "id": "split-second-morph",
+    "topic": "special-actions",
+    "question": "While Krosan Grip is on the stack, can I turn a face-down creature face up?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Krosan Grip"
+    ],
+    "expected_sections_any": [
+      "702.61",
+      "116"
+    ],
+    "verdict": "yes",
+    "truth": "Yes. Turning a face-down creature face up is a special action, which split second doesn't stop (702.61b, 116.2b). Mana abilities are allowed too.",
+    "grounding": "CR 702.61b; Krosan Grip ruling 2021-03-19",
+    "source": "official ruling (Scryfall rulings bulk); research 2026-10-09"
+  },
+  {
+    "id": "indestructible-minus-toughness",
+    "topic": "sba",
+    "question": "Does Toxic Deluge for three kill an indestructible Darksteel Myr?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Toxic Deluge",
+      "Darksteel Myr"
+    ],
+    "expected_sections_any": [
+      "704.5",
+      "702.12"
+    ],
+    "verdict": "yes",
+    "truth": "Yes. It becomes 0/0, and a creature with 0 toughness is put into the graveyard as a state-based action (704.5f). That isn't destruction, so indestructible doesn't help.",
+    "grounding": "CR 704.5f, 702.12b; Darksteel Myr reminder text",
+    "source": "official ruling (Scryfall rulings bulk); research 2026-10-09"
+  },
+  {
+    "id": "counters-annihilate",
+    "topic": "sba",
+    "question": "A creature with two +1/+1 counters gets three -1/-1 counters. What counters does it end up with?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_sections_any": [
+      "704.5"
+    ],
+    "answer_any": [
+      [
+        "one -1/-1",
+        "1 -1/-1",
+        "single -1/-1",
+        "one −1/−1",
+        "a -1/-1 counter",
+        "one minus one"
+      ]
+    ],
+    "truth": "One -1/-1 counter. As a state-based action, pairs of +1/+1 and -1/-1 counters are removed (704.5q).",
+    "grounding": "CR 704.5q",
+    "source": "official ruling (Scryfall rulings bulk); research 2026-10-09"
+  },
+  {
+    "id": "commander-dies-then-command-zone",
+    "topic": "commander",
+    "question": "My commander is destroyed and I move it to the command zone. Does Blood Artist's dies trigger still happen?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Blood Artist"
+    ],
+    "expected_sections_any": [
+      "903.9"
+    ],
+    "verdict": "yes",
+    "truth": "Yes. It goes to the graveyard first and you may move it to the command zone as a state-based action (903.9a), so it did die.",
+    "grounding": "CR 903.9a",
+    "source": "official ruling (Scryfall rulings bulk); research 2026-10-09"
+  },
+  {
+    "id": "lightning-greaves-own-equip",
+    "topic": "targeting",
+    "question": "Lightning Greaves is attached to my only creature. Can I equip another piece of Equipment to that creature?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Lightning Greaves"
+    ],
+    "verdict": "no",
+    "truth": "No. Shroud stops your own targeting too, and equip targets. Lightning Greaves can't be unattached without another creature to move it to.",
+    "grounding": "Lightning Greaves ruling 2020-08-07",
+    "source": "official ruling (Scryfall rulings bulk); research 2026-10-09"
+  },
+  {
+    "id": "teferis-protection-banishing-light",
+    "topic": "phasing",
+    "question": "My Banishing Light phases out with Teferi's Protection. Does the card it exiled come back?",
+    "expected_sources": [
+      "cr"
+    ],
+    "expected_cards": [
+      "Teferi's Protection"
+    ],
+    "verdict": "no",
+    "truth": "No. Phasing out isn't leaving the battlefield, so 'until this leaves the battlefield' effects don't end.",
+    "grounding": "Teferi's Protection ruling 2017-08-25",
+    "source": "official ruling (Scryfall rulings bulk); research 2026-10-09"
+  }
+]

@@ -1,7 +1,6 @@
 """Tests for the query router."""
 
 import json
-from pathlib import Path
 
 from src.query_router import QueryRouter
 
@@ -54,7 +53,7 @@ def test_card_name_detection(tmp_path):
 
     assert result["type"] == "card_interaction"
     assert "Lightning Bolt" in result["mentioned_cards"]
-    assert result["sources"] is None  # search all
+    assert "scryfall" not in result["sources"]  # card is pinned, not searched
 
 
 def test_general_rules_question():
@@ -63,7 +62,7 @@ def test_general_rules_question():
     result = router.route("How does priority work?")
 
     assert result["type"] == "general"
-    assert result["sources"] is None
+    assert "cr" in result["sources"] and "scryfall" not in result["sources"]
 
 
 def test_card_name_case_insensitive(tmp_path):
@@ -76,3 +75,57 @@ def test_card_name_case_insensitive(tmp_path):
 
     assert result["type"] == "card_interaction"
     assert "Lightning Bolt" in result["mentioned_cards"]
+
+
+def _router(tmp_path, names, ambiguous=()):
+    path = tmp_path / "card_names.json"
+    path.write_text(json.dumps({"names": names, "ambiguous": list(ambiguous)}))
+    return QueryRouter(card_names_path=str(path))
+
+
+def test_card_match_requires_whole_words(tmp_path):
+    """'Opt' must not match inside 'option'."""
+    router = _router(tmp_path, ["Opt"])
+
+    assert router.route("Is there an option to skip combat?")["type"] == "general"
+
+
+def test_card_match_prefers_longest_name(tmp_path):
+    router = _router(tmp_path, ["Lightning", "Lightning Bolt"])
+
+    assert router.find_cards("Can Lightning Bolt hit a planeswalker?") == ["Lightning Bolt"]
+
+
+def test_ambiguous_single_word_needs_capitalization(tmp_path):
+    router = _router(tmp_path, ["Fight", "Island"], ambiguous=["Fight", "Island"])
+
+    assert router.find_cards("can my creature fight an island?") == []
+    assert router.find_cards("Does Fight count as damage from a spell?") == ["Fight"]
+    assert router.find_cards("Island walk: how does it work?") == []  # sentence-initial capital
+
+
+def test_ambiguous_face_name_not_matched_at_sentence_start(tmp_path):
+    router = _router(tmp_path, ["Who // What // When // Where // Why"], ambiguous=["What", "Who", "When", "Where", "Why"])
+
+    assert router.find_cards("What is the stack?") == []
+    assert router.find_cards("Blood Moon is out. What happens?") == []
+
+
+def test_card_match_ignores_punctuation_and_faces(tmp_path):
+    router = _router(tmp_path, ["Jace, the Mind Sculptor", "Delver of Secrets // Insectile Aberration"])
+
+    found = router.find_cards("jace the mind sculptor and delver of secrets")
+
+    assert found == ["Jace, the Mind Sculptor", "Delver of Secrets // Insectile Aberration"]
+
+
+def test_full_card_name_beats_other_cards_face(tmp_path):
+    router = _router(tmp_path, ["Grave Researcher // Reanimate", "Reanimate"])
+
+    assert router.find_cards("if I Reanimate it") == ["Reanimate"]
+
+
+def test_possessive_after_card_name(tmp_path):
+    router = _router(tmp_path, ["Urza's Saga"])
+
+    assert router.find_cards("Can Urza's Saga's chapter three find it?") == ["Urza's Saga"]
