@@ -29,3 +29,32 @@ If the judge is stopped (Ctrl+C, or killed) while the LLM is generating, Ollama 
 - Fix options:
   - Cancel the in-flight request on shutdown. Close the `ollama.Client` HTTP connection, or stream the response and stop reading.
   - Have startup check `GET /api/ps` and report that a previous generation is still running.
+
+## Nice to haves
+
+### Voice fonts
+
+Try different judge voices and pick a default for each profile. Today it's `piper_en_US-amy-medium` on the Mac and `-low` on the Pi (`tts_voice` in config).
+
+- Moonshine offers 60 English voices across three engines:
+  - 25 Piper voices (`piper_en_US-*`): light and fast, good for the Pi.
+  - 20 Kokoro voices (`kokoro_af_*` / `kokoro_am_*`): more natural, heavier.
+  - 15 ZipVoice voices (`zipvoice_*`): accents, plus voice cloning from a reference clip (`TextToSpeech.clone_from()`).
+  - List them with `moonshine_voice.list_tts_voices("en_us")`.
+- Measure synthesis time on the Pi for each candidate. The judge already waits on the LLM, so the voice shouldn't add noticeable delay.
+- Ideas:
+  - A `make voices` script that speaks a sample ruling in each voice.
+  - A spoken "Judge, change your voice" command.
+  - A cloned "head judge" voice. Only from audio we have rights to.
+
+### Custom thinking sounds
+
+Replace the bundled `success.wav` chime (Moonshine's `play_success()`) with our own sounds:
+- an acknowledgement sound
+- a "still thinking" keep-alive
+- optionally, a soft ambient loop while the model reasons, stopped the instant the answer is ready
+- an error tone
+
+- Moonshine's earcons are fixed asset files. Custom sounds need their own playback, for example `sounddevice` on the same `output_device`. That playback must go through `JudgeListener._speak_lock` so it never overlaps speech, and it must keep the mic muted, or stay quiet enough that speech-to-text ignores it.
+- Config could be `thinking_cue: custom` plus a `sounds/` folder (`ack.wav`, `thinking.wav`, `error.wav`), with the current cues as the fallback.
+- Keep the files small and royalty-free (or self-made), and check they play on the Pi's audio output.
